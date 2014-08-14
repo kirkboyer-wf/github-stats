@@ -1,0 +1,4 @@
+gae-link-libs
+nose
+rednose
+coverage
