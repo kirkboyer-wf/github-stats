@@ -3,6 +3,6 @@
 *.ds
 *.swp
 .DS_Store
-settingslocal.py
+settings_local.py
 lib
 .build

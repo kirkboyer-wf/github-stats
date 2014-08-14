@@ -1,4 +1,5 @@
 AUTH_TOKEN = 'fake_token!'
+ORG_NAME = "yippy-dippy!"
 
 try:
     import settings_local
