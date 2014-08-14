@@ -2,8 +2,8 @@
 # import sys
 
 from google.appengine.ext import webapp
-from pages import IndexPage
-from pages import ReportPage
+from stats.pages import IndexPage
+from stats.pages import ReportPage
 # import settings
 
 app = webapp.WSGIApplication([
