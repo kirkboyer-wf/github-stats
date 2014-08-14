@@ -1,0 +1,43 @@
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+    <title>Workiva Github User-tagging Statistics</title>
+
+    <link rel="stylesheet" href="static/css/normalize.css">
+    <link rel="stylesheet" href="static/css/main_h5bp.css">
+    <link rel="stylesheet" href="static/css/main.css">
+
+    <script src="static/js/vendor/jquery-1.11.1.min.js"></script>
+    <script src="//code.jquery.com/ui/1.11.0/jquery-ui.js"></script>
+    <script src="static/js/vendor/modernizr-2.8.0.min.js"></script>
+  </head>
+
+  <body>
+    <div id="top_bar">
+      <img src="static/img/workiva_logo.png" alt="workiva logo" style="height:60px; float:left;">
+      <h1 style="text-align:center; float:center;">User-tagging Statistics</h1>
+    </div>
+    <hr>
+
+    <div id="side-bar">
+      <h3>I would like to ...</h3>
+      <a href="/report"> See a customizable report </a><br>
+
+    </div>
+    
+    <div id="content">
+
+      <div id="report" style="float: left">
+	      <h3>Tag Report</h3>
+	      Here is where stuff will go.
+      </div>
+
+      <div id="response_message" style="float: left">
+        {{ response_message|safe }}
+      </div>
+  
+    </div>
+  </body>
+</html>

@@ -7,3 +7,14 @@ threadsafe: true
 libraries:
 - name: webapp2
   version: latest
+
+handlers:
+- url: /\_/.*
+  script: main.app
+  secure: always
+  login: admin
+
+- url: /.*
+  script: main.app
+  secure: always
+  login: required
