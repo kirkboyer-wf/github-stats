@@ -1,4 +1,7 @@
+pycleaner
 gae-link-libs
 nose
 rednose
 coverage
+ez_setup
+google_appengine
