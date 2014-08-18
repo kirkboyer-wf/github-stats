@@ -1,4 +1,1 @@
-validate_email
-oauth2client
-httplib2
 pygithub
