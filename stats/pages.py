@@ -7,7 +7,7 @@ import webapp2
 
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(
-        os.path.join(os.path.dirname(__file__), '.')),
+        os.path.join(os.path.dirname(__file__), '..')),
     extensions=['jinja2.ext.autoescape'],
     autoescape=True)
 
@@ -16,7 +16,7 @@ class Page(webapp2.RequestHandler):
     def _make_page(self, page_name, template_values):
         template = JINJA_ENVIRONMENT.get_template(
             'templates/{page}.html'.format(page=page_name))
-        self.response.headers['Content-Type'] = 'text.html'
+        self.response.headers['Content-Type'] = 'text/html'
         self.response.write(template.render(template_values))
 
 
