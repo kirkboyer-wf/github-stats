@@ -6,3 +6,4 @@
 settings_local.py
 lib
 .build
+localversion/*
