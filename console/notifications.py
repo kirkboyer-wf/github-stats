@@ -17,6 +17,8 @@ def _primary_language(repo):
     of code).
     """
     languages = repo.get_languages()
+    if not languages:
+        return 'None'
     return max(languages.iterkeys(), key=(lambda key: languages[key]))
 
 

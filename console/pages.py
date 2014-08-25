@@ -7,6 +7,8 @@ import settings
 from notifications import get_all_notifications_from_org
 from notifications import NotificationEntry
 from notifications import UserEntry
+import datetime
+import logging
 
 # import settings
 
@@ -21,6 +23,12 @@ GIT_OBJECT = Github(login_or_token=settings.AUTH_TOKEN)
 
 def fill_notifications_data():
     # TODO: check if we already have data.
+    if NotificationEntry.all().filter('timestamp >', datetime.datetime.now() +
+                                      datetime.timedelta(-1)):
+        logging.info("Already have stuff from within 1 days!!!")
+        # then we've already got data
+        return
+
     notes = [NotificationEntry(user=note['user'],
                                repo=note['repo'],
                                timestamp=note['timestamp'],
@@ -42,6 +50,10 @@ def fill_notifications_data():
         u = UserEntry(languages=languages,
                       user=user)
         u.put()
+
+
+def find_best_user_for_language(language):
+    users = UserEntry.all().fetch()
 
 
 class Page(webapp2.RequestHandler):
