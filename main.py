@@ -1,6 +1,5 @@
 import os
 import sys
-
 import jinja2
 import webapp2
 
@@ -8,51 +7,46 @@ lib_path = os.path.join(os.getcwd(), 'lib')
 if lib_path not in sys.path:
     sys.path.insert(0, lib_path)
 
-from google.appengine.ext import ndb
-from google.appengine.api import taskqueue
-from google.appengine.ext import webapp
+# project modules
+import settings
+from api_interface import get_github
+from api_interface import get_org
+
+from api_interface import GetGithub
+from api_interface import GetOrg
+from api_interface import GetRepos
+from api_interface import GetRepo
+from api_interface import GetForks
+from api_interface import GetPulls
 
 from console.pages import IndexPage
 from console.pages import ReportPage
-# import settings
+
+# google app engine stuff
+# from google.appengine.ext import ndb
+# from google.appengine.api import taskqueue
 
 JINJA_ENV = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)))
 
 
-class DatObject(ndb.Model):
-    value = ndb.IntegerProperty(indexed=False)
-
-
-# TESTING TASK STUFF
-class DatHandler(webapp2.RequestHandler):
+class Tester(webapp2.RequestHandler):
     def get(self):
-        template_values = {'values': DatObject.query()}
-        test_template = JINJA_ENV.get_template('index.html')
-        self.response.out.write(test_template.render(template_values))
+        # Make each kind of task
+        get_github()
+        get_org()
+        # make_task_to_get_org()
 
-    def post(self):
-        key = self.request.get('key')
-        taskqueue.add(url='/test_secret', params={'key': key})
-        self.redirect('/')
-
-
-class DatWorker(webapp2.RequestHandler):
-    def post(self):
-        key = self.request.get('key')
-
-        def update_value():
-            value = DatObject.get_or_insert(key, value=0)
-            value.value += 1
-            value.put()
-        update_value()
-
-
-app = webapp.WSGIApplication([
+app = webapp2.WSGIApplication([
     ('/', IndexPage),
     ('/report', ReportPage),
-    ('/test_tasks', DatHandler),
-    ('/test_secret', DatWorker)
+    ('/test_tasks', Tester),
+    (settings.URLS['get_github'], GetGithub),
+    (settings.URLS['get_org'], GetOrg),
+    (settings.URLS['get_repos'], GetRepos),
+    (settings.URLS['get_repo'], GetRepo),
+    (settings.URLS['get_forks'], GetForks),
+    (settings.URLS['get_pulls'], GetPulls)
     # ('/url/that/was/hit/', HandlerClass),
     # list of these!
 ], debug=True)

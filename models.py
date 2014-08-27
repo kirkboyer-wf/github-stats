@@ -28,6 +28,7 @@ class PullRequest(ndb.Model):
     body = ndb.TextProperty()
 
     # list of comments
+    has_comments = ndb.BooleanProperty(default=False)
     comments = ndb.StructuredProperty(Comment, repeated=True)
 
 
@@ -43,11 +44,12 @@ class Repository(ndb.Model):
     repository = ndb.PickleProperty()
 
     # list of forks (Repositories)
-    has_forks = ndb.BooleanProperty(default=True)
+    has_forks = ndb.BooleanProperty(default=False)
     forks = ndb.PickleProperty()
 
     # list of pull requests
-    pulls = ndb.StructuredProperty(PullRequest, repeated=True)
+    has_pulls = ndb.BooleanProperty(default=False)
+    pulls = ndb.PickleProperty()
 
 
 def _dict_of_repos(org_model):
@@ -58,33 +60,12 @@ class Organization(ndb.Model):
     name = ndb.StringProperty()
     organization = ndb.PickleProperty()
     has_repos = ndb.BooleanProperty(default=False)
-    _repos = ndb.StructuredProperty(Repository, repeated=True)
-    repos = ndb.ComputedProperty(_dict_of_repos)
+
+    # pickled dict of repos
+    repos = ndb.PickleProperty()
 
 
 class Team(ndb.Model):
     """Just a pyGithub Team object."""
     name = ndb.StringProperty()
     team = ndb.PickleProperty()
-
-
-class AttemptedTask(ndb.Model):
-    ID = ndb.IntegerProperty()
-
-    # the python .__name__ of the function the task is trying to complete
-    function_name = ndb.StringProperty()
-
-    # Whether the task terminated successfully
-    completed = ndb.BooleanProperty(default=False)
-
-    # whether the task was allowed to start or not
-    accepted = ndb.BooleanProperty()
-
-    timestamp = ndb.DateTimeProperty()
-
-
-class TaskList(ndb.Model):
-    """Helps to keep track of which tasks are already running,
-    """
-    tasks = ndb.StructuredProperty(AttemptedTask, repeated=True)
-
