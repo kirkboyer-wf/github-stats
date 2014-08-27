@@ -3,6 +3,7 @@ ORG_NAME = "yippy-dippy!"
 
 
 URLS = {
+    'purge_tasks': '',
     'get_github': '',
     'get_org': '',
     'get_orgs': '',

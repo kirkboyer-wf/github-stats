@@ -9,8 +9,11 @@ if lib_path not in sys.path:
 
 # project modules
 import settings
-from api_interface import get_github
-from api_interface import get_org
+from enforcement import PurgeTasks
+# from api_interface import get_github_task
+# from api_interface import get_org_task
+# from api_interface import get_repos_task
+from api_interface import get_repo_task
 
 from api_interface import GetGithub
 from api_interface import GetOrg
@@ -33,14 +36,14 @@ JINJA_ENV = jinja2.Environment(
 class Tester(webapp2.RequestHandler):
     def get(self):
         # Make each kind of task
-        get_github()
-        get_org()
-        # make_task_to_get_org()
+        get_repo_task('wf-grafana')
+
 
 app = webapp2.WSGIApplication([
     ('/', IndexPage),
     ('/report', ReportPage),
     ('/test_tasks', Tester),
+    (settings.URLS['purge_tasks'], PurgeTasks),
     (settings.URLS['get_github'], GetGithub),
     (settings.URLS['get_org'], GetOrg),
     (settings.URLS['get_repos'], GetRepos),

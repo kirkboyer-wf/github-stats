@@ -4,9 +4,12 @@
 # Also enforce uniqueness of tasks by what they are trying to accomplish, so
 # we don't waste time and github-rate-limit requests.
 
+# TODO: Do everything context-style instead of this jankety way
+
 from google.appengine.ext import ndb
 from google.appengine.api import taskqueue
 import logging
+import webapp2
 
 OBJECT_LIST_KEY = "object_list_key_sAj8eFJHQIiqjQHxHFy0pQokFQ23QFVaSDF"
 TASK_LIST_KEY = "task_list_key_qpD13Apif4zc09zFqhV8PpoN2z9AmmoeD1QpG"
@@ -22,7 +25,7 @@ def get_enforced_objects():
 
 
 @ndb.transactional(xg=True)
-def safe_ndb_get_by_key_id(object_id):
+def safe_ndb_get_key_by_id(object_id):
     """Return the given key if it's in the enforced list."""
     objects = get_enforced_objects()
     # return the first (should be only) occurrence of the key in the list,
@@ -46,7 +49,7 @@ def safe_ndb_put(target, id=None):
         else:
             target.populate(key=ndb.Key(target.__class__, id))
 
-    if not safe_ndb_get_by_key_id(target.key.id()):
+    if not safe_ndb_get_key_by_id(target.key.id()):
         result_key = target.put()
         enforced_objects = get_enforced_objects()
         enforced_objects.keys.append(result_key)
@@ -75,7 +78,7 @@ def safe_start_task(purpose=None, **kwargs):
     else:
         tasks.claimed_purposes.append(purpose)
         tasks.put()
-        logging.info("Starting task with purpose: {0}".format(purpose))
+        logging.info("\tCLAIMING: -<{0}>-".format(purpose))
         taskqueue.add(**kwargs)
         return True
 
@@ -84,7 +87,23 @@ def safe_start_task(purpose=None, **kwargs):
 def unclaim_purpose(purpose):
     """If the given purpose is claimed, unclaim it. Obviously only a task
     that just completed the purpose/task should do this."""
+    logging.info("\tUNCLAIMING: -<{0}>-".format(purpose))
     tasks = get_enforced_tasks()
     if purpose in tasks.claimed_purposes:
         tasks.claimed_purposes = [item for item in tasks.claimed_purposes
                                   if item != purpose]
+        tasks.put()
+
+
+class PurgeTasks(webapp2.RequestHandler):
+    def get(self):
+        try:
+            ndb.Key(EnforcedTasks, TASK_LIST_KEY).delete()
+        except:
+            logging.info("There was no enforced task list, apparnetly.")
+
+    def post(self):
+        try:
+            ndb.Key(EnforcedTasks, TASK_LIST_KEY).delete()
+        except:
+            logging.info("There was no enforced task list, apparnetly.")

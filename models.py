@@ -1,5 +1,7 @@
 # Models for storing github data in the datastore
 
+# Currently there's a bit of redundant information. TODO: Fix this
+
 # external modules
 import re
 
@@ -43,9 +45,9 @@ class Repository(ndb.Model):
     name = ndb.StringProperty()
     repository = ndb.PickleProperty()
 
-    # list of forks (Repositories)
+    # were forks put on datastore?
     has_forks = ndb.BooleanProperty(default=False)
-    forks = ndb.PickleProperty()
+    is_fork = ndb.BooleanProperty(default=False)
 
     # list of pull requests
     has_pulls = ndb.BooleanProperty(default=False)
