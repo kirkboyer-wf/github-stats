@@ -39,7 +39,6 @@ def safe_ndb_get_key_by_id(object_id):
 def safe_ndb_put(target, id=None):
     """Attempt to register a new Key; if one exists with the given name,
     return None. If registration was successful, return the Key."""
-
     # if an ID wasn't given, create one!
     if not hasattr(target, 'key'):
         if not id:

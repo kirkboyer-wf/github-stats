@@ -13,7 +13,8 @@ from enforcement import PurgeTasks
 # from api_interface import get_github_task
 # from api_interface import get_org_task
 # from api_interface import get_repos_task
-from api_interface import get_repo_task
+# from api_interface import get_repo_task
+from api_interface import get_forks_task
 
 from api_interface import GetGithub
 from api_interface import GetOrg
@@ -36,7 +37,8 @@ JINJA_ENV = jinja2.Environment(
 class Tester(webapp2.RequestHandler):
     def get(self):
         # Make each kind of task
-        get_repo_task('wf-grafana')
+        # get_repo_task('wf-grafana')
+        get_forks_task('bigsky')
 
 
 app = webapp2.WSGIApplication([

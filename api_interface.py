@@ -16,7 +16,6 @@ from enforcement import safe_start_task
 from enforcement import unclaim_purpose
 
 # appengine stuff
-from google.appengine.api import taskqueue
 from google.appengine.ext import ndb
 
 JINJA_ENV = jinja2.Environment(
@@ -97,6 +96,10 @@ def _get_org():
                      name=encode_if_unicode(github_org_object.name),
                      key=ndb.Key(models.Organization, 'org_object'))
         safe_ndb_put(org)
+
+        # populate datastore with organization's repos
+        get_repos_task()
+
     finally:
         unclaim_purpose('get_org_object')
 
@@ -142,11 +145,11 @@ def _get_repos():
             github_repo_objects = {encode_if_unicode(repo.name): repo
                                    for repo in github_repo_objects}
             org.populate(repos=github_repo_objects, has_repos=True)
-            safe_ndb_put(org)
+
+            # org is already unique, so jut put it back
+            org.put()
 
             # Store the repository objects individually on the datastore
-
-            datastore_repos = []
             for name, repo in github_repo_objects.items():
                 datastore_repo = models.Repository()
                 name = encode_if_unicode(name)
@@ -154,9 +157,26 @@ def _get_repos():
                     name="repo:"+name,
                     repository=repo,
                     key=ndb.Key(models.Repository, "repo:"+name))
-                datastore_repos.append(datastore_repo)
+                safe_ndb_put(datastore_repo)
 
-            ndb.put_multi(datastore_repos)
+                # get all this repo's forks
+                get_forks_task(name)
+
+                # get all this repo's pull requests
+                get_pulls_task(name)
+
+            # datastore_repos = []
+            # for name, repo in github_repo_objects.items():
+            #     datastore_repo = models.Repository()
+            #     name = encode_if_unicode(name)
+            #     datastore_repo.populate(
+            #         name="repo:"+name,
+            #         repository=repo,
+            #         key=ndb.Key(models.Repository, "repo:"+name))
+            #     datastore_repos.append(datastore_repo)
+
+            # # Likely to be a huge list..
+            # ndb.put_multi(datastore_repos)
     finally:
         unclaim_purpose('get_repos')
 
@@ -189,8 +209,8 @@ def _get_repo(repo_name):
     try:
         org_key = safe_ndb_get_key_by_id('org_object')
         if not org_key:
-            get_org_task()
             logging.debug("GetRepo task failed: no org object.")
+            get_org_task()
             raise Exception("GetRepo: Don't have organization object yet.")
         else:
             org = org_key.get()
@@ -202,6 +222,11 @@ def _get_repo(repo_name):
                           repository=github_repo_object,
                           key=ndb.Key(models.Repository, "repo:"+repo_name))
             safe_ndb_put(repo)
+
+            # get all this repo's forks and pulls, now
+            get_forks_task(repo_name)
+            get_pulls_task(repo_name)
+
     finally:
         unclaim_purpose('get_repo:{0}'.format(repo_name))
 
@@ -237,97 +262,94 @@ def _get_forks(repo_name):
     try:
         repo_key = safe_ndb_get_key_by_id("repo:{0}".format(repo_name))
         if not repo_key:
-            get_repo_task(repo_name)
             logging.debug("GetForks task failed: don't have repo.")
+            get_repo_task(repo_name)
             raise Exception("GetRepo: Don't have repo {0} to fork.".format(
                 repo_name))
         else:
             repo = repo_key.get()
             github_forks_list = list(repo.repository.get_forks())
+            logging.info("Got {0} forks for repo {1}".format(
+                len(github_forks_list),
+                repo.repository.name))
+
+            # TODO: some way to use put_multi safely here?
             for github_fork in github_forks_list:
+                # Don't use a get_repo task, because github gives you a repo
+                # object here already and you don't need to
                 fork = models.Repository()
-                fork_name = encode_if_unicode(fork.name)
+                fork_name = encode_if_unicode(github_fork.name)
                 fork.populate(name='repo:'+fork_name,
                               repository=github_fork,
+                              is_fork=True,
                               key=ndb.Key(models.Repository, 'repo:'+fork_name))
                 safe_ndb_put(fork)
+                # get this fork's pulls
+                get_pulls_task(fork_name)
+
+            repo.populate(has_forks=True)
+
+            # repo is already unique, so just put it back
+            repo.put()
 
     finally:
         unclaim_purpose('get_forks:{0}'.format(repo_name))
 
 
 class GetForks(webapp2.RequestHandler):
-    def _get_forks(self):
-        repo_name = self.request.get('repo_name')
-
-        # Make sure we have what we need
-        repo_object = models.Repository.query(
-            models.Repository.name == repo_name).get()
-        if not repo_object:
-            get_repo_task(repo_name)
-            logging.debug("GetForks task failed: no github object.")
-            raise Exception("Don't have {0}'s {1} repo object yet.".format(
-                settings.ORG_NAME, repo_name))
-
-        # Get the fork-repositories and store them on the datastore
-        github_repo_objects = list(repo_object.repository.get_forks())
-        datastore_repos = []
-        for fork in github_repo_objects:
-            datastore_repo = models.Repository()
-            datastore_repo.populate(name=encode_if_unicode(fork.name),
-                                    repo=fork)
-            datastore_repos.append(datastore_repo)
-
-        ndb.put_multi(datastore_repos)
-        repo_object.populate(has_forks=True)
-        repo_object.put()
-
     def get(self):
-        self._get_forks()
+        repo_name = self.request.get('repo_name')
+        _get_forks(repo_name)
 
     def post(self):
-        self._get_forks()
+        repo_name = self.request.get('repo_name')
+        _get_forks(repo_name)
 
 
-@ndb.transactional(xg=True)
-def make_task_to_get_pulls(repo_name):
+def get_pulls_task(repo_name):
     """Create a task that will try to get the given repository's pull requests.
     """
-    logging.debug("Pulls-get: Inserting task to retrieve pulls for"
-                  " repository {0}".format(repo_name))
-    taskqueue.add(url=settings.URLS['get_pulls'],
-                  method='POST',
-                  params={'repo_name': repo_name})
+    repo_key = safe_ndb_get_key_by_id('repo:'+repo_name)
+    if repo_key:
+        if repo_key.get().has_pulls:
+            return  # Already got this repo's pulls
+
+    logging.debug("Pulls-get: Inserting task to retrieve pulls for {0}'s"
+                  " repo {1}".format(settings.ORG_NAME, repo_name))
+    safe_start_task(purpose='get_pulls:{0}'.format(repo_name),
+                    url=settings.URLS['get_pulls'],
+                    method='POST',
+                    params={'repo_name': repo_name})
+
+
+def _get_pulls(repo_name):
+    repo_key = safe_ndb_get_key_by_id('repo:'+repo_name)
+    if not repo_key:
+        logging.debug("GetPulls task failed: don't have repo.")
+        get_repo_task(repo_name)
+        raise Exception("Don't have {0}'s {1} repo object yet.".format(
+            settings.ORG_NAME, repo_name))
+    else:
+        repo = repo_key.get()
+        github_pull_objects = list(repo.repository.get_pulls())
+        for github_pull in github_pull_objects:
+            pull = models.PullRequest()
+            pull.populate(github_id=github_pull.id,
+                          body=github_pull.body,
+                          key=ndb.Key(models.PullRequest,
+                                      'pull:'+str(github_pull.id)))
+            safe_ndb_put(pull)
+        repo.populate(has_pulls=True)
+
+        # repo is already unique, so just put it ack
+        repo.put()
 
 
 class GetPulls(webapp2.RequestHandler):
-    def _get_pulls(self):
-        repo_name = self.request.get('repo_name')
-
-        # Make sure we have what we need
-        repo_object = models.Repository.query(
-            models.Repository.name == repo_name).get()
-        if not repo_object:
-            get_repo_task(repo_name)
-            logging.debug("GetPulls task failed: no github object.")
-            raise Exception("Don't have {0}'s {1} repo object yet.".format(
-                settings.ORG_NAME, repo_name))
-
-        # Get the pulls and store them in the repo object, if that object
-        # doesn't already have up-to-date pulls
-        github_pull_objects = list(repo_object.repository.get_pulls())
-        datastore_pulls = []
-        for pull in github_pull_objects:
-            datastore_pull = models.PullRequest()
-            datastore_pull.populate(github_id=pull.id,
-                                    body=pull.body)
-            datastore_pulls.append(datastore_pull)
-        ndb.put_multi(datastore_pulls)
-        repo_object.populate(has_pulls=True)
-        repo_object.put()
-
     def get(self):
-        self._get_pulls()
+        repo_name = self.request.get('repo_name')
+        _get_pulls(repo_name)
 
     def post(self):
-        self._get_pulls()
+        repo_name = self.request.get('repo_name')
+        _get_pulls(repo_name)
