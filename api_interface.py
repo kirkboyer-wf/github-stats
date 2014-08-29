@@ -46,30 +46,25 @@ def make_task(purpose=None, obj=None, delay_until=None):
         countdown=wait_time)
 
 
+def _make_tasks_from_list(_list, purpose):
+    for obj in list(_list):
+        make_task(purpose=purpose,
+                  obj=(pickle.dumps(obj) if obj else None))
+
+
 def _get_repos():
     """Get the organization, then get all its repos and start tasks to get
     info from them."""
-        gh = _github_object()
-        org = gh.get_organization(settings.ORG_NAME)
+    gh = _github_object()
+    org = gh.get_organization(settings.ORG_NAME)
 
-        repo_list = list(org.get_repos())
-        for repo in repo_list:
-            make_task(purpose='get_forks',
-                      payload=repo)
-
-
+    _make_tasks_from_list(org.get_repos(), 'get_forks')
 
 
 def _get_forks(repo):
     """Get all the forks of a repo, then start the next step for that repo
     and all the retrieved forks."""
-        forks_list = list(repo.get_forks())
-        for fork in forks_list:
-            make_task(purpose='get_pulls',
-                      payload=fork)
-        make_task(purpose='get_pulls',
-                  payload=repo)
-
+    _make_tasks_from_list(repo.get_forks(), 'get_pulls')
 
     make_task(purpose='get_pulls',
               obj=(pickle.dumps(repo) if repo else None))
@@ -78,11 +73,7 @@ def _get_forks(repo):
 def _get_pulls(repo):
     """Get all pulls from a given repo, then start tasks to get info from them.
     """
-        pulls_list = list(repo.get_pulls())
-        for pull in pulls_list:
-            make_task(purpose='get_comments',
-                      payload=pull)
-
+    _make_tasks_from_list(repo.get_pulls(), 'get_comments')
 
 
 def _make_datastore_comment(pull, comment):
