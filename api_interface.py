@@ -21,10 +21,8 @@ JINJA_ENV = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)))
 
 
-def update_data(after=None):
-    make_task(purpose='get_repos',
-              params={'after': after},
-              method='POST')
+def update_data():
+    make_task(purpose='get_repos')
 
 
 def _github_object():
@@ -35,13 +33,17 @@ def _rate_reset():
     return _github_object().get_rate_limit().rate.reset
 
 
-def make_task(purpose=None, payload=None, delay_until=None):
+def make_task(purpose=None, obj=None, delay_until=None):
     wait_time = (delay_until-datetime.datetime.now()
                  ).seconds if delay_until else 0
-    taskqueue.add(url=settings.URLS[purpose],
-                  payload=pickle.dumps(payload),
-                  method='POST',
-                  countdown=wait_time)
+    taskqueue.add(
+        url=settings.URLS[purpose],
+        params={
+            'purpose': purpose,
+            'object': pickle.dumps(obj) if obj else None,
+        },
+        method='POST',
+        countdown=wait_time)
 
 
 def _get_repos():
@@ -69,6 +71,8 @@ def _get_forks(repo):
                   payload=repo)
 
 
+    make_task(purpose='get_pulls',
+              obj=(pickle.dumps(repo) if repo else None))
 
 
 def _get_pulls(repo):
