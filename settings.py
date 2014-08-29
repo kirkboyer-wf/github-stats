@@ -10,6 +10,7 @@ URLS = {
     'get_repos': '',
     'get_forks': '',
     'get_pulls': '',
+    'get_comments': '',
 }
 
 

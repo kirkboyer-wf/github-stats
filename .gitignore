@@ -10,3 +10,4 @@ localversion
 .localversion
 *.data
 *.txt
+old_*
