@@ -81,32 +81,26 @@ def _get_pulls(repo):
 
 
 
+def _make_datastore_comment(pull, comment):
+    datastore_comment = models.Comment(
+        github_id=comment.id,
+        pull_request_id=pull.id,
+        repo=pull.base.repo.name,
+        author=comment.user.name,
+        body=comment.body)
+    datastore_comment.put_async()
 
 
 def _get_comments(pull):
     """Get all comments from a pull, then store them along with the pull
     request's body (i.e. the first comment in its issues thread) on the
     datastore."""
-        comment_list = list(pull.get_comments())
-        comment_list.extend(list(pull.get_issue_comments()))
-        for comment in comment_list:
-            datastore_comment = models.Comment()
-            datastore_comment.populate(
-                github_id=comment.id,
-                pull_request_id=pull.id,
-                repo=pull.base.repo.name,
-                author=comment.user.name,
-                body=comment.body)
-            datastore_comment.put_async()
-        pull_body_comment = models.Comment()
-        pull_body_comment.populate(
-            github_id=pull.id,
-            pull_request_id=pull.id,
-            repo=pull.base.repo.name,
-            author=pull.user.name,
-            body=pull.body)
+    comment_list = list(pull.get_comments())
+    comment_list.extend(list(pull.get_issue_comments()))
+    for comment in comment_list:
+        _make_datastore_comment(pull, comment)
 
-
+    _make_datastore_comment(pull, pull)
 
 
 GET_FOR = {
