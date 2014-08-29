@@ -47,7 +47,6 @@ def make_task(purpose=None, payload=None, delay_until=None):
 def _get_repos():
     """Get the organization, then get all its repos and start tasks to get
     info from them."""
-    try:
         gh = _github_object()
         org = gh.get_organization(settings.ORG_NAME)
 
@@ -56,23 +55,12 @@ def _get_repos():
             make_task(purpose='get_forks',
                       payload=repo)
 
-    except RateLimitExceededException:
-        make_task(purpose='get_org',
-                  delay_until=_rate_reset())
 
-
-class GetRepos(webapp2.RequestHandler):
-    def get():
-        _get_repos()
-
-    def post():
-        _get_repos()
 
 
 def _get_forks(repo):
     """Get all the forks of a repo, then start the next step for that repo
     and all the retrieved forks."""
-    try:
         forks_list = list(repo.get_forks())
         for fork in forks_list:
             make_task(purpose='get_pulls',
@@ -80,52 +68,25 @@ def _get_forks(repo):
         make_task(purpose='get_pulls',
                   payload=repo)
 
-    except RateLimitExceededException:
-        make_task(purpose='get_forks',
-                  payload=repo,
-                  delay_until=_rate_reset())
 
-
-class GetForks(webapp2.RequestHandler):
-    def get(self):
-        repo = pickle.loads(self.request.body)
-        _get_forks(repo)
-
-    def post(self):
-        repo = pickle.loads(self.request.body)
-        _get_forks(repo)
 
 
 def _get_pulls(repo):
     """Get all pulls from a given repo, then start tasks to get info from them.
     """
-    try:
         pulls_list = list(repo.get_pulls())
         for pull in pulls_list:
             make_task(purpose='get_comments',
                       payload=pull)
 
-    except RateLimitExceededException:
-        make_task(purpose='get_pulls',
-                  payload=repo,
-                  delay_until=_rate_reset())
 
 
-class GetPulls(webapp2.RequestHandler):
-    def get(self):
-        repo = pickle.loads(self.request.body)
-        _get_pulls(repo)
-
-    def post(self):
-        repo = pickle.loads(self.request.body)
-        _get_pulls(repo)
 
 
 def _get_comments(pull):
     """Get all comments from a pull, then store them along with the pull
     request's body (i.e. the first comment in its issues thread) on the
     datastore."""
-    try:
         comment_list = list(pull.get_comments())
         comment_list.extend(list(pull.get_issue_comments()))
         for comment in comment_list:
@@ -145,18 +106,29 @@ def _get_comments(pull):
             author=pull.user.name,
             body=pull.body)
 
-    except RateLimitExceededException:
-        make_task(purpose='get_comments',
-                  payload=pull,
-                  delay_until=_rate_reset())
 
 
-class GetComments(webapp2.RequestHandler):
-    def get(self):
-        pull = pickle.loads(self.request.body)
-        _get_comments(pull)
 
+GET_FOR = {
+    'get_repos': _get_repos,
+    'get_forks': _get_forks,
+    'get_pulls': _get_pulls,
+    'get_comments': _get_comments,
+}
+
+
+class Get(webapp2.RequestHandler):
     def post(self):
-        pull = pickle.loads(self.request.body)
-        _get_comments(pull)
-
+        purpose = self.request.get('purpose')
+        obj = (pickle.loads(self.request.get('object'))
+               if purpose != 'get_repos' else None)
+        try:
+            GET_FOR[purpose](obj)
+        except RateLimitExceededException:
+            make_task(
+                purpose=purpose,
+                params={
+                    'purpose': purpose,
+                    'object': pickle.dumps(obj) if obj else None,
+                },
+                delay_until=_rate_reset())
