@@ -1,20 +1,20 @@
 # Funcs/classes for interfacing with (the pyGithub wrapper for) the Github API
 
-# external modules
-import github
-from github.GithubException import RateLimitExceededException
-import os
-import jinja2
-import webapp2
+# built-in modules
 import datetime
 import pickle
 
-# project modules
-import settings
-import models
-
-# appengine stuff
+# third-party modules
+import github
+from github.GithubException import RateLimitExceededException
 from google.appengine.api import taskqueue
+import jinja2
+import os
+import webapp2
+
+# project modules
+import models
+import settings
 
 
 JINJA_ENV = jinja2.Environment(
