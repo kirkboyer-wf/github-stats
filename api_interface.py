@@ -23,6 +23,14 @@ JINJA_ENV = jinja2.Environment(
 
 def update_data():
     make_task(purpose='get_repos')
+    models.LastUpdate.get_or_insert('last_update')
+
+
+def _last_update():
+    update_key = models.LastUpdate.get_by_id('last_update')
+    if not update_key:
+        return datetime.datetime.fromtimestamp(0)
+    return update_key.get()
 
 
 def _github_object():
@@ -73,7 +81,11 @@ def _get_forks(repo):
 def _get_pulls(repo):
     """Get all pulls from a given repo, then start tasks to get info from them.
     """
-    _make_tasks_from_list(repo.get_pulls(), 'get_comments')
+    _make_tasks_from_list(
+        repo.get_pulls(
+            since=_last_update()
+        ),
+        'get_comments')
 
 
 def _make_datastore_comment(pull, comment):
