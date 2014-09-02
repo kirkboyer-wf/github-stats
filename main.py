@@ -11,10 +11,7 @@ if lib_path not in sys.path:
 import settings
 
 from api_interface import update_data
-from api_interface import GetRepos
-from api_interface import GetForks
-from api_interface import GetPulls
-from api_interface import GetComments
+from api_interface import Get
 
 from console.pages import IndexPage
 from console.pages import ReportPage
@@ -39,10 +36,10 @@ app = webapp2.WSGIApplication([
     ('/', IndexPage),
     ('/report', ReportPage),
     ('/test_tasks', Tester),
-    (settings.URLS['get_comments'], GetComments),
-    (settings.URLS['get_repos'], GetRepos),
-    (settings.URLS['get_forks'], GetForks),
-    (settings.URLS['get_pulls'], GetPulls)
+    (settings.URLS['get_comments'], Get),
+    (settings.URLS['get_repos'], Get),
+    (settings.URLS['get_forks'], Get),
+    (settings.URLS['get_pulls'], Get)
     # ('/url/that/was/hit/', HandlerClass),
     # list of these!
 ], debug=True)

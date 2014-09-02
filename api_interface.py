@@ -60,7 +60,8 @@ def _make_tasks_from_list(_list, purpose):
                   obj=(pickle.dumps(obj) if obj else None))
 
 
-def _get_repos():
+# this is hacky. maybe just make this have its own requesthandler?
+def _get_repos(obj):
     """Get the organization, then get all its repos and start tasks to get
     info from them."""
     gh = _github_object()
