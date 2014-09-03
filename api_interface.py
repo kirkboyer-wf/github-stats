@@ -6,7 +6,7 @@ import pickle
 
 # third-party modules
 import github
-from github.GithubException import RateLimitExceededException
+from github.GithubException import GithubException
 from google.appengine.api import taskqueue
 from google.appengine.ext import ndb
 import jinja2
@@ -117,11 +117,12 @@ class Get(webapp2.RequestHandler):
         obj = pickle.loads(self.request.get('object'))
         try:
             GET_FOR[purpose](obj)
-        except RateLimitExceededException:
-            make_task(
-                purpose=purpose,
-                params={
-                    'purpose': purpose,
-                    'object': pickle.dumps(obj),
-                },
-                delay=_rate_reset_wait())
+        except GithubException, e:
+            if u'rate limit exceeded' in e.data[u'message']:
+                make_task(
+                    purpose=purpose,
+                    params={
+                        'purpose': purpose,
+                        'object': pickle.dumps(obj),
+                    },
+                    delay=_rate_reset_wait())
