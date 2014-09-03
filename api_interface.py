@@ -52,7 +52,7 @@ def make_task(purpose=None, obj=None, delay=None):
         url=settings.URLS[purpose],
         params={
             'purpose': purpose,
-            'object': pickle.dumps(obj) if obj else None,
+            'object': pickle.dumps(obj),
         },
         method='POST',
         countdown=delay)
@@ -75,7 +75,7 @@ def _get_forks(repo):
     _make_tasks_from_list(repo.get_forks(), 'get_pulls')
 
     make_task(purpose='get_pulls',
-              obj=(pickle.dumps(repo) if repo else None))
+              obj=repo)
 
 
 def _get_pulls(repo):
@@ -121,8 +121,7 @@ GET_FOR = {
 class Get(webapp2.RequestHandler):
     def post(self):
         purpose = self.request.get('purpose')
-        obj = (pickle.loads(self.request.get('object'))
-               if purpose != 'get_repos' else None)
+        obj = pickle.loads(self.request.get('object'))
         try:
             GET_FOR[purpose](obj)
         except RateLimitExceededException:
@@ -130,6 +129,6 @@ class Get(webapp2.RequestHandler):
                 purpose=purpose,
                 params={
                     'purpose': purpose,
-                    'object': pickle.dumps(obj) if obj else None,
+                    'object': pickle.dumps(obj),
                 },
                 delay=_rate_reset_wait())
