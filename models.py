@@ -22,4 +22,4 @@ class Comment(ndb.Model):
 
 
 class LastUpdate(ndb.Model):
-    timestamp = ndb.DateTimeProperty()
+    timestamp = ndb.DateTimeProperty(auto_now=True)
