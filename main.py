@@ -24,18 +24,15 @@ JINJA_ENV = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)))
 
 
-class Tester(webapp2.RequestHandler):
+class Update(webapp2.RequestHandler):
     def get(self):
-        # Make each kind of task
-        # get_forks_task('bigsky')
-        # get_pulls_task('wf-grafana')
         update_data()
 
 
 app = webapp2.WSGIApplication([
     ('/', IndexPage),
     ('/report', ReportPage),
-    ('/test_tasks', Tester),
+    ('/update', Update),
     (settings.URLS['get_comments'], Get),
     (settings.URLS['get_repos'], Get),
     (settings.URLS['get_forks'], Get),
