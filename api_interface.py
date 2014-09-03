@@ -27,17 +27,24 @@ def fix_unicode(s):
 
 
 def update_all_data():
-    ndb.Key(models.LastUpdate, 'last_update').delete()
+    ndb.Key(models.Update, 'last_update').delete()
     make_task(purpose='get_repos', obj=_github_object())
 
 
 def update_data():
     make_task(purpose='get_repos', obj=_github_object())
-    models.LastUpdate.get_or_insert('last_update')
 
 
-def _last_update():
-    update = models.LastUpdate.get_by_id('last_update')
+def _set_update_timestamps():
+    update = models.Update.get_or_insert('last_update')
+    swapper = update.current or datetime.fromtimestamp(0)
+    update.last = swapper
+    update.current = datetime.now()
+    update.put()
+
+
+def _get_last_update():
+    update = models.Update.get_or_insert('last_update').last
     return update or datetime.fromtimestamp(0)
 
 

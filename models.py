@@ -23,5 +23,6 @@ class Comment(ndb.Model):
                                  repeated=True)
 
 
-class LastUpdate(ndb.Model):
-    timestamp = ndb.DateTimeProperty(auto_now=True)
+class Update(ndb.Model):
+    last = ndb.DateTimeProperty()
+    current = ndb.DateTimeProperty()
