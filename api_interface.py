@@ -61,8 +61,8 @@ def make_task(purpose=None, obj=None, delay=None):
 
 
 def _make_tasks_from_list(_list, purpose):
-    for i, obj in enumerate(list(_list)):
-        make_task(purpose=purpose, obj=obj, delay=i)
+    for obj in list(_list):
+        make_task(purpose=purpose, obj=obj)
 
 
 def _get_repos(gh):
