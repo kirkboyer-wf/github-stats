@@ -27,10 +27,10 @@ def update_data():
 
 
 def _last_update():
-    update_key = models.LastUpdate.get_by_id('last_update')
-    if not update_key:
-        return datetime.datetime.fromtimestamp(0)
-    return update_key.get()
+    update = models.LastUpdate.get_by_id('last_update')
+    if not update:
+        return datetime.fromtimestamp(0)
+    return update
 
 
 def _github_object():
