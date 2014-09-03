@@ -70,8 +70,6 @@ def _get_repos(gh):
 
 
 def _get_forks(repo):
-    """Get all the forks of a repo, then start the next step for that repo
-    and all the retrieved forks."""
     _make_tasks_from_list(repo.get_forks(), 'get_pulls')
 
     make_task(purpose='get_pulls',
@@ -79,8 +77,6 @@ def _get_forks(repo):
 
 
 def _get_pulls(repo):
-    """Get all pulls from a given repo, then start tasks to get info from them.
-    """
     _make_tasks_from_list(
         repo.get_pulls(
             since=_last_update().timestamp
@@ -99,9 +95,6 @@ def _make_datastore_comment(pull, comment):
 
 
 def _get_comments(pull):
-    """Get all comments from a pull, then store them along with the pull
-    request's body (i.e. the first comment in its issues thread) on the
-    datastore."""
     comment_list = list(pull.get_comments())
     comment_list.extend(list(pull.get_issue_comments()))
     for comment in comment_list:
