@@ -43,13 +43,11 @@ def _github_object():
     return github.Github(login_or_token=settings.AUTH_TOKEN)
 
 
-def _rate_reset():
-    return _github_object().get_rate_limit().rate.reset
+def _rate_reset_wait():
+    return (_github_object().get_rate_limit().rate.reset-datetime.now()).seconds
 
 
-def make_task(purpose=None, obj=None, delay_until=None):
-    wait_time = (delay_until-datetime.datetime.now()
-                 ).seconds if delay_until else 0
+def make_task(purpose=None, obj=None, delay=None):
     taskqueue.add(
         url=settings.URLS[purpose],
         params={
@@ -57,13 +55,12 @@ def make_task(purpose=None, obj=None, delay_until=None):
             'object': pickle.dumps(obj) if obj else None,
         },
         method='POST',
-        countdown=wait_time)
+        countdown=delay)
 
 
 def _make_tasks_from_list(_list, purpose):
-    for obj in list(_list):
-        make_task(purpose=purpose,
-                  obj=(pickle.dumps(obj) if obj else None))
+    for i, obj in enumerate(list(_list)):
+        make_task(purpose=purpose, obj=obj, delay=i)
 
 
 def _get_repos(gh):
@@ -86,7 +83,7 @@ def _get_pulls(repo):
     """
     _make_tasks_from_list(
         repo.get_pulls(
-            since=_last_update()
+            since=_last_update().timestamp
         ),
         'get_comments')
 
@@ -135,4 +132,4 @@ class Get(webapp2.RequestHandler):
                     'purpose': purpose,
                     'object': pickle.dumps(obj) if obj else None,
                 },
-                delay_until=_rate_reset())
+                delay=_rate_reset_wait())
