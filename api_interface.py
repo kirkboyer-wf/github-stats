@@ -22,6 +22,10 @@ JINJA_ENV = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)))
 
 
+def fix_unicode(s):
+    return s.encode('utf-8') if isinstance(s, unicode) else s
+
+
 def update_all_data():
     ndb.Key(models.LastUpdate, 'last_update').delete()
     make_task(purpose='get_repos', obj=_github_object())
@@ -88,10 +92,12 @@ def _make_datastore_comment(pull, comment):
     datastore_comment = models.Comment(
         github_id=comment.id,
         pull_request_id=pull.id,
-        repo=pull.base.repo.name,
-        author=comment.user.name,
-        body=comment.body)
-    datastore_comment.put_async()
+        repo=fix_unicode(pull.base.repo.name),
+        language=fix_unicode(pull.base.repo.language),
+        author=fix_unicode("{0} ({1})".format(
+            comment.user.name, comment.user.login)),
+        body=fix_unicode(comment.body))
+    datastore_comment.put()
 
 
 def _get_comments(pull):
