@@ -21,6 +21,11 @@ JINJA_ENV = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)))
 
 
+def update_all_data():
+    ndb.Key(models.LastUpdate, 'last_update').delete()
+    make_task(purpose='get_repos', obj=_github_object())
+
+
 def update_data():
     make_task(purpose='get_repos')
     models.LastUpdate.get_or_insert('last_update')
