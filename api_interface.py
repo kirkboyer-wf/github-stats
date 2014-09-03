@@ -1,13 +1,14 @@
 # Funcs/classes for interfacing with (the pyGithub wrapper for) the Github API
 
 # built-in modules
-import datetime
+from datetime import datetime
 import pickle
 
 # third-party modules
 import github
 from github.GithubException import RateLimitExceededException
 from google.appengine.api import taskqueue
+from google.appengine.ext import ndb
 import jinja2
 import os
 import webapp2
@@ -27,7 +28,7 @@ def update_all_data():
 
 
 def update_data():
-    make_task(purpose='get_repos')
+    make_task(purpose='get_repos', obj=_github_object())
     models.LastUpdate.get_or_insert('last_update')
 
 
@@ -65,11 +66,7 @@ def _make_tasks_from_list(_list, purpose):
                   obj=(pickle.dumps(obj) if obj else None))
 
 
-# this is hacky. maybe just make this have its own requesthandler?
-def _get_repos(obj):
-    """Get the organization, then get all its repos and start tasks to get
-    info from them."""
-    gh = _github_object()
+def _get_repos(gh):
     org = gh.get_organization(settings.ORG_NAME)
 
     _make_tasks_from_list(org.get_repos(), 'get_forks')
