@@ -72,7 +72,8 @@ def _get_repos(gh):
 
 
 def _get_forks(repo):
-    _make_tasks_from_list(repo.get_forks(), 'get_pulls')
+    if repo.forks_count > 0:
+        _make_tasks_from_list(repo.get_forks(), 'get_pulls')
 
     make_task(purpose='get_pulls',
               obj=repo)
