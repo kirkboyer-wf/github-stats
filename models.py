@@ -19,7 +19,8 @@ class Comment(ndb.Model):
     language = ndb.StringProperty()
     author = ndb.StringProperty()
     body = ndb.TextProperty()
-    users = ndb.ComputedProperty(_usernames_mentioned_in_comment)
+    users = ndb.ComputedProperty(_usernames_mentioned_in_comment,
+                                 repeated=True)
 
 
 class LastUpdate(ndb.Model):
