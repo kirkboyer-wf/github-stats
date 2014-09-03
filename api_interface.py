@@ -38,9 +38,7 @@ def update_data():
 
 def _last_update():
     update = models.LastUpdate.get_by_id('last_update')
-    if not update:
-        return datetime.fromtimestamp(0)
-    return update
+    return update or datetime.fromtimestamp(0)
 
 
 def _github_object():
