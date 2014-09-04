@@ -29,6 +29,7 @@ def fix_unicode(s):
 
 def update_all_data():
     ndb.Key(models.Update, 'last_update').delete()
+    _set_update_timestamps()
     make_task(purpose='get_repos', obj=_github_object())
 
 
