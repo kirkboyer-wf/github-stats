@@ -1,27 +1,27 @@
+# built-in modules
 import os
 import sys
-import jinja2
-import webapp2
-import logging
 
 lib_path = os.path.join(os.getcwd(), 'lib')
 if lib_path not in sys.path:
     sys.path.insert(0, lib_path)
 
+# third-party modules
+import jinja2
+import logging
+import webapp2
+
 # project modules
-import settings
 import models
+import settings
 
-from api_interface import update_all_data
 from api_interface import Get
+from api_interface import update_all_data
 
+from console.pages import DownloadPage
 from console.pages import IndexPage
 from console.pages import ReportPage
-from console.pages import DownloadPage
 
-# google app engine stuff
-# from google.appengine.ext import ndb
-# from google.appengine.api import taskqueue
 
 JINJA_ENV = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)))

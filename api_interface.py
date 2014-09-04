@@ -10,9 +10,9 @@ from github.GithubException import GithubException
 from google.appengine.api import taskqueue
 from google.appengine.ext import ndb
 import jinja2
+import logging
 import os
 import webapp2
-import logging
 
 # project modules
 import models
