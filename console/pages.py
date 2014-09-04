@@ -1,16 +1,17 @@
-import os
-
-from github import Github
+# built-in mdules
 import jinja2
+import os
 import webapp2
-import settings
-from notifications import get_all_notifications_from_org
-from notifications import NotificationEntry
-from notifications import UserEntry
-import datetime
+import heapq
 import logging
 
-# import settings
+# third-party modules
+from github import Github
+
+# project modules
+import models
+import settings
+
 
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(
