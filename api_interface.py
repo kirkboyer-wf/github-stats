@@ -97,6 +97,7 @@ def _get_pulls(repo):
 
 def _make_datastore_comment(pull, comment):
     datastore_comment = models.Comment(
+        key=ndb.Key(models.Comment, str(comment.id)),
         github_id=comment.id,
         pull_request_id=pull.id,
         repo=fix_unicode(pull.base.repo.name),
