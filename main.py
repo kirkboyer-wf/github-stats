@@ -9,12 +9,14 @@ if lib_path not in sys.path:
 
 # project modules
 import settings
+import models
 
-from api_interface import update_data
+from api_interface import update_all_data
 from api_interface import Get
 
 from console.pages import IndexPage
 from console.pages import ReportPage
+from console.pages import DownloadPage
 
 # google app engine stuff
 # from google.appengine.ext import ndb
@@ -24,15 +26,18 @@ JINJA_ENV = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)))
 
 
-class Update(webapp2.RequestHandler):
+class Updater(webapp2.RequestHandler):
     def get(self):
-        update_data()
+        logging.info("Before this update: have {0} comments.".format(
+            models.Comment.query().count()))
+        update_all_data()
 
 
 app = webapp2.WSGIApplication([
     ('/', IndexPage),
-    ('/report', ReportPage),
-    ('/update', Update),
+    (settings.URLS['download'], DownloadPage),
+    (settings.URLS['report'], ReportPage),
+    (settings.URLS['update'], Updater),
     (settings.URLS['get_comments'], Get),
     (settings.URLS['get_repos'], Get),
     (settings.URLS['get_forks'], Get),
