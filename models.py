@@ -27,3 +27,7 @@ class Comment(ndb.Model):
 class Update(ndb.Model):
     last = ndb.DateTimeProperty()
     current = ndb.DateTimeProperty()
+
+
+class Report(ndb.Model):
+    text = ndb.TextProperty()
