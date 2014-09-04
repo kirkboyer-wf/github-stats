@@ -21,6 +21,7 @@ class Comment(ndb.Model):
     body = ndb.TextProperty()
     users = ndb.ComputedProperty(_usernames_mentioned_in_comment,
                                  repeated=True)
+    updated_at = ndb.DateTimeProperty()
 
 
 class Update(ndb.Model):

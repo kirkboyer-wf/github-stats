@@ -109,7 +109,7 @@ def _make_datastore_comment(pull, comment):
         language=fix_unicode(pull.base.repo.language),
         author=fix_unicode(comment.user.login),
         body=fix_unicode(comment.body),
-        update_at=comment.updated_at)
+        updated_at=comment.updated_at)
     datastore_comment.put()
 
 
