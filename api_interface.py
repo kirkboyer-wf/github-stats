@@ -54,7 +54,8 @@ def _get_last_update():
 
 
 def _github_object():
-    return github.Github(login_or_token=settings.AUTH_TOKEN)
+    return github.Github(login_or_token=settings.AUTH_TOKEN,
+                         per_page=100)
 
 
 def _rate_reset_wait():
