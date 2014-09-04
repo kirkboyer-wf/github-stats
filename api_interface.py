@@ -23,7 +23,7 @@ JINJA_ENV = jinja2.Environment(
 
 
 def fix_unicode(s):
-    return s.encode('utf-8') if isinstance(s, unicode) else s
+    return s.encode().strip() if isinstance(s, unicode) else s
 
 
 def update_all_data():
@@ -61,7 +61,8 @@ def make_task(purpose=None, obj=None, delay=None):
         url=settings.URLS[purpose],
         params={
             'purpose': purpose,
-            'object': pickle.dumps(obj),
+            'object': obj if isinstance(obj, basestring) else
+            pickle.dumps(obj)
         },
         method='POST',
         countdown=delay)
@@ -100,9 +101,9 @@ def _make_datastore_comment(pull, comment):
         pull_request_id=pull.id,
         repo=fix_unicode(pull.base.repo.name),
         language=fix_unicode(pull.base.repo.language),
-        author=fix_unicode("{0} ({1})".format(
-            comment.user.name, comment.user.login)),
-        body=fix_unicode(comment.body))
+        author=fix_unicode(comment.user.login),
+        body=fix_unicode(comment.body),
+        update_at=comment.updated_at)
     datastore_comment.put()
 
 
@@ -133,8 +134,5 @@ class Get(webapp2.RequestHandler):
             if u'rate limit exceeded' in e.data[u'message']:
                 make_task(
                     purpose=purpose,
-                    params={
-                        'purpose': purpose,
-                        'object': pickle.dumps(obj),
-                    },
+                    obj=self.request.get('object'),
                     delay=_rate_reset_wait())
