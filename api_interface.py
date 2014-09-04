@@ -84,16 +84,17 @@ def _get_forks(repo):
     if repo.forks_count > 0:
         _make_tasks_from_list(repo.get_forks(), 'get_pulls')
 
-    make_task(purpose='get_pulls',
-              obj=repo)
+    make_task(purpose='get_pulls', obj=repo)
 
 
 def _get_pulls(repo):
-    _make_tasks_from_list(
-        repo.get_pulls(
-            since=_last_update().timestamp
-        ),
-        'get_comments')
+    if repo.has_issues:
+        _make_tasks_from_list(
+            repo.get_pulls(
+                state="all",
+                since=_get_last_update()
+            ),
+            'get_comments')
 
 
 def _make_datastore_comment(pull, comment):
@@ -110,10 +111,11 @@ def _make_datastore_comment(pull, comment):
 
 
 def _get_comments(pull):
-    comment_list = list(pull.get_comments())
-    comment_list.extend(list(pull.get_issue_comments()))
-    for comment in comment_list:
-        _make_datastore_comment(pull, comment)
+    if pull.comments+pull.review_comments > 0:
+        comment_list = list(pull.get_comments())
+        comment_list.extend(list(pull.get_issue_comments()))
+        for comment in comment_list:
+            _make_datastore_comment(pull, comment)
 
     _make_datastore_comment(pull, pull)
 
