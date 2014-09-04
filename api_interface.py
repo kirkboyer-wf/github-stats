@@ -32,6 +32,7 @@ def update_all_data():
 
 
 def update_data():
+    _set_update_timestamps()
     make_task(purpose='get_repos', obj=_github_object())
 
 
