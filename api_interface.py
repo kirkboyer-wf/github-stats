@@ -116,11 +116,10 @@ def _make_datastore_comment(pull, comment):
 
 
 def _get_comments(pull):
-    if pull.comments+pull.review_comments > 0:
-        comment_list = list(pull.get_comments())
-        comment_list.extend(list(pull.get_issue_comments()))
-        for comment in comment_list:
-            _make_datastore_comment(pull, comment)
+    comment_list = list(pull.get_comments())
+    comment_list.extend(list(pull.get_issue_comments()))
+    for comment in comment_list:
+        _make_datastore_comment(pull, comment)
 
     _make_datastore_comment(pull, pull)
 
