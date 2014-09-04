@@ -2,6 +2,7 @@ import os
 import sys
 import jinja2
 import webapp2
+import logging
 
 lib_path = os.path.join(os.getcwd(), 'lib')
 if lib_path not in sys.path:

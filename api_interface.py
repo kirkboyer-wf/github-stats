@@ -12,6 +12,7 @@ from google.appengine.ext import ndb
 import jinja2
 import os
 import webapp2
+import logging
 
 # project modules
 import models
@@ -41,6 +42,8 @@ def _set_update_timestamps():
     swapper = update.current or datetime.fromtimestamp(0)
     update.last = swapper
     update.current = datetime.now()
+    logging.info("Last update time is {0}, current update time is {1}".format(
+        update.last, update.current))
     update.put()
 
 
@@ -131,6 +134,7 @@ GET_FOR = {
 class Get(webapp2.RequestHandler):
     def post(self):
         purpose = self.request.get('purpose')
+        # logging.info(self.request.get('object'))
         obj = pickle.loads(self.request.get('object'))
         try:
             GET_FOR[purpose](obj)
