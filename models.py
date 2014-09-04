@@ -8,7 +8,7 @@ from google.appengine.ext import ndb
 
 
 def _usernames_mentioned_in_comment(comment):
-    pattern = r'[@][a-zA-z]{3,25}[-]wf'
+    pattern = r'[@][a-zA-Z]{3,25}[-]wf'
     return list(set(re.findall(pattern, comment.body)))
 
 
