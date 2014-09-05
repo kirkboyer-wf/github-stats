@@ -77,7 +77,7 @@ def make_task(purpose=None, obj=None, delay=None):
 
 
 def _make_tasks_from_iterable(iterable, purpose):
-    for obj in list(iterable):  # Do all pagination before trying to use list
+    for obj in iterable:
         make_task(purpose=purpose, obj=obj)
 
 
