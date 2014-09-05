@@ -22,29 +22,10 @@ JINJA_ENVIRONMENT = jinja2.Environment(
 GIT_OBJECT = Github(login_or_token=settings.AUTH_TOKEN)
 
 
-class Page(webapp2.RequestHandler):
-    def _make_page(self, page_name, template_values):
-        template = JINJA_ENVIRONMENT.get_template(
-            'templates/{page}.html'.format(page=page_name))
-        self.response.headers['Content-Type'] = 'text/html'
-        self.response.write(template.render(template_values))
-
-
-class IndexPage(Page):
-    def get(self):
-        template_values = {}
-        self._make_page('index', template_values)
-
-    def post(self):
-        pass
-
-
 def _mention_count_by_language(comments, languages):
     num_mentions = {language: {} for language in languages}
 
     for comment in comments:
-        # if comment.github_id == comment.pull_request_id and not pr_body:
-        #     continue
         for user in comment.users:
             if user in num_mentions[comment.language]:
                 num_mentions[comment.language][user] += 1
@@ -60,46 +41,51 @@ def _top_users_by_language(num_mentions, languages, n_largest):
         top_users[language] = heapq.nlargest(
             n_largest,
             num_mentions[language].iterkeys(),
-            key=(lambda k:
-                 num_mentions[language][k]))
+            key=(lambda user:
+                 num_mentions[language][user]))
 
     return top_users
 
 
-def _get_report_by_language(languages, top_users, num_mentions):
-    report = "Top users by mentions in comments:\n"
+def _language_stats_text(user, rank, mentions):
+    return "\t#{rank}: {user}, mentioned {mentions} times\n".format(
+        rank=rank, user=user, mentions=mentions)
+
+
+def _language_report_text(languages, num_mentions, n_largest):
+    report = "Top users by language, using # mentions in comments:\n"
+    top_users = _top_users_by_language(num_mentions, languages, n_largest)
     for language in languages:
-        if language == 'None':
+        if language == 'None':  # for this report, only repos with languages.
             continue
 
         report += "Top users for {0}\n".format(language)
 
         for rank, user in enumerate(top_users[language]):
-            report += ("\t#{rank}: {user},"
-                       " mentioned {mentions} times\n".format(
-                           rank=rank+1,
-                           user=user,
-                           mentions=num_mentions[language][user]))
+            report += _language_stats_text(
+                user, rank+1, num_mentions[language][user])
     return report
 
 
-def _prepare_report(n_largest=10, pr_body=True):
-    # for each language, find top user by mentions
-    logging.info("getting comments...")
-    comments = models.Comment.query().fetch()
-
+def _make_language_report_available(comments, languages, n_largest):
     languages = set([comment.language for comment in comments])
     num_mentions = _mention_count_by_language(comments, languages)
+    language_report = models.Report.get_or_insert('language_report')
+    language_report.text = _language_report_text(languages,
+                                                 num_mentions,
+                                                 n_largest)
+    language_report.put()
 
-    # get top users by language
-    top_users = _top_users_by_language(num_mentions,
-                                       languages,
-                                       n_largest)
 
-    report = models.Report.get_or_insert('report')
-    report.text = _get_report_by_language(languages, top_users, num_mentions)
-    report.put()
-    return top_users, num_mentions, languages
+def _make_connectivity_report_available(comments, languages, n_largest):
+    pass  # TODO: make this do something
+
+
+def _make_reports_available(n_largest=10, pr_body=True):
+    comments = models.Comment.query().fetch()
+
+    _make_language_report_available(comments, n_largest)
+    _make_connectivity_report_available(comments, n_largest)
 
 
 def _start_download(handler, file_content, filename):
@@ -110,22 +96,40 @@ def _start_download(handler, file_content, filename):
     handler.response.out.write(file_content)
 
 
+class Page(webapp2.RequestHandler):
+    def _make_page(self, page_name, template_values):
+        template = JINJA_ENVIRONMENT.get_template(
+            'templates/{page}.html'.format(page=page_name))
+        self.response.headers['Content-Type'] = 'text/html'
+        self.response.write(template.render(template_values))
+
+
 class DownloadPage(webapp2.RequestHandler):
     def get(self):
-        _start_download(self,
-                        file_content=models.Report.get_or_insert(
-                            'report').text or 'Report not created yet.',
-                        filename='test_data.txt')
+        _start_download(
+            self,
+            file_content=models.Report.get_or_insert(
+                'report').text or 'Report not created yet.',
+            filename='test_data.txt')
 
 
 class PrepareReportPage(webapp2.RequestHandler):
     def post(self):
-        _prepare_report()
+        _make_reports_available()
 
 
 class ReportPage(Page):
     def get(self):
         template_values = {}
-        _prepare_report()
+        _make_reports_available()
         self._make_page('report', template_values)
         self.redirect(settings.URLS['download'])
+
+
+class IndexPage(Page):
+    def get(self):
+        template_values = {}
+        self._make_page('index', template_values)
+
+    def post(self):
+        pass
