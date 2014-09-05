@@ -21,6 +21,7 @@ from api_interface import update_all_data
 from console.pages import DownloadPage
 from console.pages import IndexPage
 from console.pages import ReportPage
+from console.pages import PrepareReportPage
 
 
 JINJA_ENV = jinja2.Environment(
@@ -38,6 +39,7 @@ app = webapp2.WSGIApplication([
     ('/', IndexPage),
     (settings.URLS['download'], DownloadPage),
     (settings.URLS['report'], ReportPage),
+    (settings.URLS['prepare_report'], PrepareReportPage),
     (settings.URLS['update'], Updater),
     (settings.URLS['get_comments'], Get),
     (settings.URLS['get_repos'], Get),

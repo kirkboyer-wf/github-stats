@@ -53,7 +53,6 @@ class PrepareReportPage(webapp2.RequestHandler):
 class ReportPage(Page):
     def get(self):
         template_values = {}
-        make_reports_available()
         self._make_page('report', template_values)
         self.redirect(settings.URLS['download'])
 

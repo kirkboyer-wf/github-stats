@@ -3,6 +3,7 @@ ORG_NAME = "yippy-dippy!"
 
 
 URLS = {
+    'prepare_report': '',
     'download': '',
     'report': '',
     'update': '',
