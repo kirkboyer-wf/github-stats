@@ -24,7 +24,7 @@ JINJA_ENV = jinja2.Environment(
 
 
 def fix_unicode(s):
-    return s.encode('utf-8').strip() if isinstance(s, unicode) else s
+    return s.encode('utf-8') if isinstance(s, unicode) else s
 
 
 def update_all_data():
