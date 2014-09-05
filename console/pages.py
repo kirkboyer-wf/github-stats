@@ -3,7 +3,6 @@ import jinja2
 import os
 import webapp2
 import heapq
-import logging
 
 # third-party modules
 from github import Github
@@ -89,7 +88,6 @@ def _make_reports_available(n_largest=10, pr_body=True):
 
 
 def _start_download(handler, file_content, filename):
-    logging.info("Starting download...")
     handler.response.headers[
         'Content-Disposition'] = 'attachment; filename={0}'.format(
             filename)
