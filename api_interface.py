@@ -43,7 +43,7 @@ def _set_update_timestamps():
     last = update.current or datetime.fromtimestamp(0)
     update.last = last
     update.current = datetime.now()
-    logging.info("Last update time is {0}, current update time is {1}".format(
+    logging.debug("Last update time is {0}, current update time is {1}".format(
         update.last, update.current))
     update.put()
 
@@ -132,7 +132,6 @@ GET_FOR = {
 class Get(webapp2.RequestHandler):
     def post(self):
         purpose = self.request.get('purpose')
-        # logging.info(self.request.get('object'))
         obj = pickle.loads(self.request.get('object'))
         try:
             GET_FOR[purpose](obj)
