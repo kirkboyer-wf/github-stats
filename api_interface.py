@@ -40,8 +40,8 @@ def update_data():
 
 def _set_update_timestamps():
     update = models.Update.get_or_insert('last_update')
-    swapper = update.current or datetime.fromtimestamp(0)
-    update.last = swapper
+    last = update.current or datetime.fromtimestamp(0)
+    update.last = last
     update.current = datetime.now()
     logging.info("Last update time is {0}, current update time is {1}".format(
         update.last, update.current))
@@ -74,31 +74,28 @@ def make_task(purpose=None, obj=None, delay=None):
         countdown=delay)
 
 
-def _make_tasks_from_list(_list, purpose):
-    for obj in list(_list):
+def _make_tasks_from_iterable(iterable, purpose):
+    for obj in list(iterable):  # Do all pagination before trying to use list
         make_task(purpose=purpose, obj=obj)
 
 
 def _get_repos(gh):
     org = gh.get_organization(settings.ORG_NAME)
 
-    _make_tasks_from_list(org.get_repos(), 'get_forks')
+    _make_tasks_from_iterable(org.get_repos(), 'get_forks')
 
 
 def _get_forks(repo):
     if repo.forks_count > 0:
-        _make_tasks_from_list(repo.get_forks(), 'get_pulls')
+        _make_tasks_from_iterable(repo.get_forks(), 'get_pulls')
 
     make_task(purpose='get_pulls', obj=repo)
 
 
 def _get_pulls(repo):
     if repo.has_issues:
-        _make_tasks_from_list(
-            repo.get_pulls(
-                state="all",
-                since=_get_last_update()
-            ),
+        _make_tasks_from_iterable(
+            repo.get_pulls(state="all", since=_get_last_update()),
             'get_comments')
 
 
