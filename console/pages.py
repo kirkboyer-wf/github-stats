@@ -39,16 +39,9 @@ class IndexPage(Page):
         pass
 
 
-def _prepare_report(n_largest=10, pr_body=True):
-    # for each language, find top user by mentions
-    logging.info("getting comments...")
-    comments = models.Comment.query().fetch()
-
-    languages = set([comment.language for comment in comments])
+def _mention_count_by_language(comments, languages):
     num_mentions = {language: {} for language in languages}
 
-    logging.info("counting mentions.")
-    # count mentions of a user by language
     for comment in comments:
         # if comment.github_id == comment.pull_request_id and not pr_body:
         #     continue
@@ -58,8 +51,10 @@ def _prepare_report(n_largest=10, pr_body=True):
             else:
                 num_mentions[comment.language][user] = 1
 
-    logging.info("getting top users.")
-    # get top users by language
+    return num_mentions
+
+
+def _top_users_by_language(num_mentions, languages, n_largest):
     top_users = {}
     for language in languages:
         top_users[language] = heapq.nlargest(
@@ -68,24 +63,41 @@ def _prepare_report(n_largest=10, pr_body=True):
             key=(lambda k:
                  num_mentions[language][k]))
 
-    logging.info("building output file")
-    # build output file
-    output_text = "Top users by mentions in comments:\n"
+    return top_users
+
+
+def _get_report_by_language(languages, top_users, num_mentions):
+    report = "Top users by mentions in comments:\n"
     for language in languages:
         if language == 'None':
             continue
 
-        output_text += "Top users for {0}\n".format(language)
+        report += "Top users for {0}\n".format(language)
 
         for rank, user in enumerate(top_users[language]):
-            output_text += ("\t#{rank}: {user},"
-                            " mentioned {mentions} times\n".format(
-                                rank=rank+1,
-                                user=user,
-                                mentions=num_mentions[language][user]))
+            report += ("\t#{rank}: {user},"
+                       " mentioned {mentions} times\n".format(
+                           rank=rank+1,
+                           user=user,
+                           mentions=num_mentions[language][user]))
+    return report
+
+
+def _prepare_report(n_largest=10, pr_body=True):
+    # for each language, find top user by mentions
+    logging.info("getting comments...")
+    comments = models.Comment.query().fetch()
+
+    languages = set([comment.language for comment in comments])
+    num_mentions = _mention_count_by_language(comments, languages)
+
+    # get top users by language
+    top_users = _top_users_by_language(num_mentions,
+                                       languages,
+                                       n_largest)
 
     report = models.Report.get_or_insert('report')
-    report.text = output_text
+    report.text = _get_report_by_language(languages, top_users, num_mentions)
     report.put()
     return top_users, num_mentions, languages
 
