@@ -1,9 +1,6 @@
 # built-in modules
 import heapq
 
-# third party modules
-from google.appengine.ext import deferred
-
 # project modules
 import models
 
@@ -61,7 +58,7 @@ def _make_language_report_available(comments, n_largest):
 
 def make_reports_available(n_largest=10, pr_body=True):
     comments = models.Comment.query().fetch()
-    deferred.defer(_make_language_report_available, comments, n_largest)
+    _make_language_report_available(comments, n_largest)
 
 
 def _make_connectivity_report_available(comments, n_largest):

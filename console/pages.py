@@ -5,6 +5,7 @@ import webapp2
 
 # third-party modules
 from github import Github
+from google.appengine.ext import deferred
 
 # project modules
 import models
@@ -47,7 +48,7 @@ class DownloadPage(webapp2.RequestHandler):
 
 class PrepareReportPage(webapp2.RequestHandler):
     def post(self):
-        make_reports_available()
+        deferred.defer(make_reports_available)
 
 
 class ReportPage(Page):
