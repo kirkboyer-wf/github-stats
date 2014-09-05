@@ -63,6 +63,8 @@ def _rate_reset_wait():
 
 
 def make_task(purpose=None, obj=None, delay=None):
+    logging.debug("Making task to {0} with object {1} and delay {2}".format(
+        purpose, obj, delay))
     taskqueue.add(
         url=settings.URLS[purpose],
         params={
